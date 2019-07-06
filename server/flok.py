@@ -5,13 +5,13 @@ import termios, fcntl, sys, os, select
 import time
 import urllib2
 import json
+import socket
 import threading
 from optparse import OptionParser
 from lib.ledboard import Ledboard
 from lib.font1 import font1 as font
 from mpd import MPDClient, CommandError
 from socket import error as SocketError
-
 
 ledboard = Ledboard('/dev/ttyACM0', 9600)
 _buffer = " " * 18
@@ -23,7 +23,7 @@ def set_string(what):
     if l > 18:
         l = 18
 
-    _buffer = what[0:l] + _buffer[l:18]
+    _buffer = what[0:l] + ' ' * (18 - l)
 
 def thrd():
     global _buffer
@@ -32,9 +32,11 @@ def thrd():
 
     while True:
         try:
-            print 'b', _buffer
+            print '>%s' % _buffer
             ledboard.drawstring(_buffer, f)
             time.sleep(90 * 10 / 9600.0)
+
+            _buffer = _buffer[1:] + _buffer[0]
 
         except Exception as e:
             print e
@@ -43,11 +45,16 @@ th = threading.Thread(target=thrd)
 th.daemon = True
 th.start()
 
-i = 0
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind(('0.0.0.0', 5001))
+
 while True:
-    print 'a', i
-    set_string('%d' % i)
-    i += 1
-    time.sleep(1)
+    try:
+        data, sender_addr = sock.recvfrom(1024)
+        print 'message from ', sender_addr
+        set_string(str(data))
+
+    except Exception as e:
+        print e
 
 #th.join()
