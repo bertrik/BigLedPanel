@@ -10,7 +10,6 @@ import threading
 from optparse import OptionParser
 from lib.ledboard import Ledboard
 from lib.font1 import font1 as font
-from mpd import MPDClient, CommandError
 from socket import error as SocketError
 
 ledboard = Ledboard('/dev/ttyACM0', 9600)
@@ -20,10 +19,12 @@ def set_string(what):
     global _buffer
 
     l = len(what)
-    if l > 18:
-        l = 18
 
-    _buffer = what[0:l] + ' ' * (18 - l)
+    if l < 18:
+        _buffer = what + ' ' * (18 - l)
+
+    else:
+        _buffer = what
 
 def thrd():
     global _buffer
@@ -33,8 +34,8 @@ def thrd():
     while True:
         try:
             print '>%s' % _buffer
-            ledboard.drawstring(_buffer, f)
-            time.sleep(90 * 10 / 9600.0)
+            ledboard.drawstring(_buffer[0:18], f)
+            time.sleep(0.5)
 
             _buffer = _buffer[1:] + _buffer[0]
 
