@@ -80,6 +80,7 @@ time.sleep(1.5)
 for i in range (0, 20):
     current = time.strftime("%H.%M.%S")
     _buffer = "%s%s%s"%(" " * 5,current," " * 5)
+    print _buffer
     ledboard.drawstring(_buffer,font())
     time.sleep(.5)
 
