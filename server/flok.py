@@ -34,7 +34,7 @@ def thrd():
         try:
             print '>%s' % _buffer
             ledboard.drawstring(_buffer, f)
-            time.sleep(90 * 10 / 9600.0)
+            time.sleep(0.5)
 
             _buffer = _buffer[1:] + _buffer[0]
 
