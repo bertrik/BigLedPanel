@@ -1,5 +1,5 @@
 #define F_CPU 16000000
-#define BAUD 9600 
+#define BAUD 115200 
 #define USE_2X   1 
 
 #include <inttypes.h>

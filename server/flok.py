@@ -12,7 +12,7 @@ from mpd import MPDClient, CommandError
 from socket import error as SocketError
 
 
-ledboard = Ledboard('/dev/ttyACM0', 9600)
+ledboard = Ledboard('/dev/ttyACM0', 115200)
 _buffer = " " * 18
 
 while True:
