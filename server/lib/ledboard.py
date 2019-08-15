@@ -31,12 +31,19 @@ class Ledboard:
     def draw(self):
         self.ser.write(chr(0x81))
         self.ser.write(chr(0x80))
+
         for frame in self.framebuffer:
-            while self.ser.out_waiting > 0:
-                time.sleep(30)
+        #    while self.ser.out_waiting > 0:
+        #        print self.ser.out_waiting
+                #time.sleep(.30)
+
             self.ser.write(chr(frame))
-        time.sleep(.20)
-        self.ser.flushOutput()
+
+        #time.sleep(.20)
+
+        self.ser.reset_input_buffer()
+            
+        self.ser.flush()
 
     def demo(self):
         for i in range(0,89):

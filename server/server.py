@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 import serial
 import sys
 import termios, fcntl, sys, os, select, string

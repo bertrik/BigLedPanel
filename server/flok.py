@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2
+from __future__ import print_function
 import serial
 import sys
 import termios, fcntl, sys, os, select
@@ -12,7 +13,10 @@ from lib.ledboard import Ledboard
 from lib.font1 import font1 as font
 from socket import error as SocketError
 
-ledboard = Ledboard('/dev/ttyACM0', 9600)
+def eprint( *args, **kwargs ):
+    return print( *args, file=sys.stderr, **kwargs )
+
+ledboard = Ledboard('/dev/ardrino', 9600)
 _buffer = " " * 18
 
 def set_string(what):
@@ -21,26 +25,33 @@ def set_string(what):
     l = len(what)
 
     if l < 18:
-        _buffer = what + ' ' * (18 - l)
+        _buffer = what + ' ' * (19 - l) # 19! for extra space
 
     else:
-        _buffer = what
+        _buffer = what + ' '
 
 def thrd():
     global _buffer
 
     f = font()
 
+    t = 0
+
     while True:
         try:
-            print '>%s' % _buffer
+            #eprint( '>%s' % _buffer )
             ledboard.drawstring(_buffer[0:18], f)
-            time.sleep(0.5)
+            #time.sleep(0.5)
 
             _buffer = _buffer[1:] + _buffer[0]
 
+            t += 1
+            if t >= 120:
+                t = 0
+                #time.sleep(2)
+
         except Exception as e:
-            print e
+            sys.exit(e)
 
 th = threading.Thread(target=thrd)
 th.daemon = True
@@ -52,10 +63,10 @@ sock.bind(('0.0.0.0', 5001))
 while True:
     try:
         data, sender_addr = sock.recvfrom(1024)
-        print 'message from ', sender_addr
-        set_string(str(data))
+        eprint('message from %r: %r' % (sender_addr, data))
+        set_string(data)
 
     except Exception as e:
-        print e
+        sys.exit(e)
 
 #th.join()
