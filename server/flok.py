@@ -17,38 +17,67 @@ def eprint( *args, **kwargs ):
     return print( *args, file=sys.stderr, **kwargs )
 
 ledboard = Ledboard('/dev/ardrino', 9600)
-_buffer = " " * 18
+wdth = ledboard.width()
+print(wdth)
+_buffer = ' ' * wdth
+scroll = True
+ts = None
 
-def set_string(what):
+def set_string(what_in):
     global _buffer
+    global ts
+    global scroll
+    global wdth
+
+    what = ''
+
+    skip = False
+    for w in what_in:
+        if skip:
+            if w == '$':
+                skip = False
+
+        elif w == '$':
+            skip = True
+
+        else:
+            what += w
 
     l = len(what)
 
-    if l < 18:
-        _buffer = what + ' ' * (19 - l) # 19! for extra space
+    if l < wdth:
+        _buffer = what + ' ' * (wdth + 1 - l) # +1! for extra space
 
     else:
         _buffer = what + ' '
 
+        scroll = True
+
+    ts = time.time()
+
 def thrd():
     global _buffer
+    global ts
+    global scroll
+    global wdth
 
     f = font()
 
-    t = 0
-
     while True:
         try:
-            #eprint( '>%s' % _buffer )
-            ledboard.drawstring(_buffer[0:18], f)
-            #time.sleep(0.5)
+            ledboard.drawstring(_buffer[0:wdth], f)
 
-            _buffer = _buffer[1:] + _buffer[0]
+            if scroll:
+                _buffer = _buffer[1:] + _buffer[0]
+            else:
+                _buffer = time.ctime()
 
-            t += 1
-            if t >= 120:
-                t = 0
-                #time.sleep(2)
+            time.sleep(0.001)
+
+            if ts and time.time() - ts >= 60:
+                _buffer = ' ' * wdth
+                ts = None
+                scroll = False
 
         except Exception as e:
             sys.exit(e)
