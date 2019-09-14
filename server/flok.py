@@ -18,11 +18,11 @@ from socket import error as SocketError
 def eprint( *args, **kwargs ):
     return print( *args, file=sys.stderr, **kwargs )
 
-ledboard = Ledboard('/dev/ardrino', 9600)
+ledboard = Ledboard('/dev/ardrino', 115200)
 wdth = ledboard.width()
 print(wdth)
 _buffer = ' ' * wdth
-scroll = True
+scroll = False
 ts = None
 
 def set_string(what_in):
@@ -61,27 +61,73 @@ def thrd():
 
     while True:
         try:
-            ledboard.drawstring(_buffer[0:wdth], f)
-
             if scroll:
-                _buffer = _buffer[1:] + _buffer[0]
-            else:
-                now = datetime.now()
-                _buffer = now.strftime('%Y%m%d %H%M%S')
+                ledboard.drawstring(_buffer[0:wdth], f)
 
-            time.sleep(0.001)
+                _buffer = _buffer[1:] + _buffer[0]
+
+            time.sleep(0.1)
 
             if ts and time.time() - ts >= 60:
+                print('end')
                 _buffer = ' ' * wdth
                 ts = None
                 scroll = False
 
         except Exception as e:
-            sys.exit(e)
+            break
+
+    print('text thread end')
+
+def pf():
+    global scroll
+
+    sockpf = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sockpf.bind(('0.0.0.0', 5003))
+
+    framebuffer = bytearray([0x00] * 90)
+
+    while True:
+        try:
+            data, sender_addr = sockpf.recvfrom(9000)
+
+            if scroll == False:
+                msgs = data.split('\n')
+
+                for m in msgs:
+                    parts = m.split(' ')
+
+                    if parts[0] == 'PX':
+                        x = int(parts[1])
+                        y = int(parts[2])
+
+                        r = int(parts[3][0:2], 16)
+                        g = int(parts[3][2:4], 16)
+                        b = int(parts[3][4:6], 16)
+                        gray = (r + g + b) / 3
+                        p = gray >= 128
+
+                        if x < 90 and y < 7:
+                            if p:
+                                framebuffer[x] |= 1 << y
+                            else:
+                                framebuffer[x] &= ~(1 << y)
+
+                ledboard.drawpixels(framebuffer)
+
+        except Exception as e:
+            print('exception', e)
+            break
+
+    print('pixelflut thread end')
 
 th = threading.Thread(target=thrd)
 th.daemon = True
 th.start()
+
+th2 = threading.Thread(target=pf)
+th2.daemon = True
+th2.start()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(('0.0.0.0', 5001))
@@ -93,6 +139,9 @@ while True:
         set_string(data)
 
     except Exception as e:
-        sys.exit(e)
+        break
 
+sys.exit(1)
+
+#th2.join()
 #th.join()

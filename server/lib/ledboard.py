@@ -15,6 +15,18 @@ class Ledboard:
     def width(self):
         return 15
 
+    def drawpixels(self, b):
+        self.framebuffer = bytearray([0x00] * 92)
+        self.framebuffer[0] = 0x81
+        self.framebuffer[1] = 0x80
+
+        i = 2
+        for bc in b:
+            self.framebuffer[i] = bc & 127
+            i += 1
+
+        self.draw()
+
     def drawstring(self, string, font):
         self.framebuffer = bytearray([0x00] * 92)
         self.framebuffer[0] = 0x81
