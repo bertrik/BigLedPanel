@@ -1,5 +1,7 @@
 #!/usr/bin/python2
+
 from __future__ import print_function
+from datetime import datetime
 import serial
 import sys
 import termios, fcntl, sys, os, select
@@ -43,15 +45,9 @@ def set_string(what_in):
         else:
             what += w
 
-    l = len(what)
+    _buffer = what + ' ' * wdth
 
-    if l < wdth:
-        _buffer = what + ' ' * (wdth + 1 - l) # +1! for extra space
-
-    else:
-        _buffer = what + ' '
-
-        scroll = True
+    scroll = True
 
     ts = time.time()
 
@@ -70,7 +66,8 @@ def thrd():
             if scroll:
                 _buffer = _buffer[1:] + _buffer[0]
             else:
-                _buffer = time.ctime()
+                now = datetime.now()
+                _buffer = now.strftime('%Y%m%d %H%M%S')
 
             time.sleep(0.001)
 
